@@ -1,0 +1,30 @@
+* What is this?
+
+with-fake-head is a script to run commands under a fake X display.
+Some programs need to be operated under an X session (sometimes even
+with a real display attached) using a particular gpu. For example,
+nvidia-settings can only work on the gpu of its X session. For gpgpu
+computing, in headless servers or when the real X is running on
+another gpu (the preferred setup) this makes changing or querying
+settings awkward.
+
+* Examples
+
+Query all nvidia settings for two cards:
+
+: with-fake-head -p 00:02:0,01:00.0 -- nvidia-settings -q all
+
+Enable double precision mode on a GTX Titan:
+
+: with-fake-head -r NVIDIA -- nvidia-settings \
+:      -a [gpu:0]/GPUDoublePrecisionBoostImmediate=1
+
+Run xterm and display it in the normal X display:
+
+: with-fake-head -r NVIDIA -- env DISPLAY=:0.0 xterm
+
+* Authors
+
+Gabor Melis (mega@retes.hu, http://quotenil.com)
+
+Based on Axel Kohlmeyer's (akohlmey@gmail.com) gpu cooling hack.

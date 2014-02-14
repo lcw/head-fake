@@ -1,0 +1,11 @@
+#!/bin/sh
+
+if nvidia-smi -q | grep Persistence | grep Disabled; then
+    echo "WARNING: At least one gpu is not in persistence mode. When the"
+    echo "kernel module is automatically removed, the changes made by this"
+    echo "script will be lost. Please consider enable persistence mode by"
+    echo "running 'nvidia-smi -pm 1'."
+fi
+
+`dirname "$0"`/with-fake-head -r NVIDIA \
+    -- nvidia-settings -a [gpu:0]/GPUDoublePrecisionBoostImmediate=1

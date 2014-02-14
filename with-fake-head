@@ -1,0 +1,107 @@
+#!/bin/bash -e
+#
+# Script to run commands under a fake X display.
+#
+#   by Gabor Melis (mega@retes.hu, http://quotenil.com),
+#   based on Axel Kohlmeyer's (akohlmey@gmail.com) gpu cooling hack.
+
+BASEDIR=`dirname "$0"`
+BINNAME=`basename "$0"`
+
+usage()
+{
+    echo "Usage:"
+    echo
+    echo "  ${BINNAME} [OPTIONS] -- COMMAND [ARGS]"
+    echo
+    echo "Executes COMMAND with ARGS in a shell running under a fake X display."
+    echo
+    echo "Options:"
+    echo
+    echo "  -p --pci-ids"
+    echo "    A comma seperated list of pci ids of gpu devices. The command"
+    echo "    will be executed on each gpu given here."
+    echo
+    echo "  -r --regex"
+    echo "    A regular expression that's matched against the output of lspci."
+    echo "    The pci ids on the matching lines are treated as if they were"
+    echo "    specified with --pci-ids"
+    echo
+    echo "Examples:"
+    echo
+    echo "  Query all nvidia settings for two cards:"
+    echo
+    echo "    ${BINNAME} -p 00:02:0,01:00.0 -- nvidia-settings -q all"
+    echo
+    echo "  Enable double precision mode on a GTX Titan:"
+    echo
+    echo "    ${BINNAME} -r NVIDIA -- nvidia-settings \\"
+    echo "         -a [gpu:0]/GPUDoublePrecisionBoostImmediate=1"
+    echo
+    echo "  Run xterm and display it in the normal X display:"
+    echo
+    echo "    ${BINNAME} -r NVIDIA -- env DISPLAY=:0.0 xterm"
+}
+
+execute_command()
+{
+    local GPU_BUS_ID="$1"
+    local CMD="$2"
+    echo "Executing command on pci device ${GPU_BUS_ID}"
+    CFG=`mktemp /tmp/xorg-XXXXXXXX.conf`
+    sed -e s,@GPU_BUS_ID@,${GPU_BUS_ID}, \
+        -e s,@SET_GPU_DIR@,${BASEDIR}, \
+        ${BASEDIR}/xorg.conf >> ${CFG}
+    xinit "${CMD}" --  :1 -once -config "${CFG}"
+    rm -f "${CFG}"
+}
+
+while [[ $# > 0 ]]; do
+    KEY="$1"
+    shift
+
+    case $KEY in
+        -p|--pci-ids)
+            GPUS="$1"
+            shift
+            ;;
+        -r|--regex)
+            REGEX="$1"
+            shift
+            ;;
+        --)
+            break
+            ;;
+        *)
+            echo "Unknown option ${KEY}"
+            usage
+            exit 1
+            ;;
+    esac
+done
+
+cleanup()
+{
+    rm -f "${CMD}" "${CFG}"
+}
+trap cleanup EXIT INT TERM
+
+CMD=`mktemp /tmp/xorg-cmd-XXXXXXXX.sh`
+echo $* > "${CMD}"
+chmod +x "${CMD}"
+
+if [ -n "${GPUS}" ]; then
+    OLD_IFS="${IFS}"
+    IFS=","
+    for PCIID in "${GPUS}"; do
+        execute_command ${PCIID} ${CMD}
+    done
+    IFS="${OLD_IFS}"
+fi
+
+if [ -n "${REGEX}" ]; then
+    PRINT_PCIID=`lspci  | sed -n -e "/${REGEX}/s/^\(..\):\(..\).\(.\).*/printf 'PCI:%d:%d:%d\\\\\\\\n' 0x\1 0x\2 0x\3;/pI"`
+    for PCIID in `eval ${PRINT_PCIID}`; do
+        execute_command ${PCIID} ${CMD}
+    done
+fi
