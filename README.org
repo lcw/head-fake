@@ -12,7 +12,7 @@ settings awkward.
 
 Query all nvidia settings for two cards:
 
-: with-fake-head -p 00:02:0,01:00.0 -- nvidia-settings -q all
+: with-fake-head -p 0:2:0,1:0:0 -- nvidia-settings -q all
 
 Enable double precision mode on a GTX Titan:
 

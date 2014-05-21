@@ -20,7 +20,8 @@ usage()
     echo
     echo "  -p --pci-ids"
     echo "    A comma seperated list of pci ids of gpu devices. The command"
-    echo "    will be executed on each gpu given here."
+    echo "    will be executed on each gpu given here. The syntax is xorg's:"
+    echo "    bus:device:function (e.g., \"PCI:1:0:0\")."
     echo
     echo "  -r --regex"
     echo "    A regular expression that's matched against the output of lspci."
@@ -31,7 +32,7 @@ usage()
     echo
     echo "  Query all nvidia settings for two cards:"
     echo
-    echo "    ${BINNAME} -p 00:02:0,01:00.0 -- nvidia-settings -q all"
+    echo "    ${BINNAME} -p 0:2:0,1:0:0 -- nvidia-settings -q all"
     echo
     echo "  Enable double precision mode on a GTX Titan:"
     echo
