@@ -7,5 +7,5 @@ if nvidia-smi -q | grep Persistence | grep Disabled; then
     echo "running 'nvidia-smi -pm 1'."
 fi
 
-`dirname "$0"`/with-fake-head -r NVIDIA \
+`dirname "$0"`/with-fake-head -r 100c \
     -- nvidia-settings -a [gpu:0]/GPUDoublePrecisionBoostImmediate=1

@@ -28,3 +28,5 @@ Run xterm and display it in the normal X display:
 Gabor Melis (mega@retes.hu, http://quotenil.com)
 
 Based on Axel Kohlmeyer's (akohlmey@gmail.com) gpu cooling hack.
+
+LPW modified this to work on the Fire cluster.  Changed paths of drivers and the search string in enable-cuda-double-precision.
